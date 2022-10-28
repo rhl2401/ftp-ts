@@ -130,11 +130,11 @@ export interface IListingElement {
 /**
  * Enum for the different types of entries in a directory listing
  */
- export enum EEntryType {
+export enum EEntryType {
     FILE = "-",
     DIR = "d",
-    SYMLINK = 'l',
-    UNKNOWN = '?'
+    SYMLINK = "l",
+    UNKNOWN = "?",
 }
 
 export interface IRegDate {
