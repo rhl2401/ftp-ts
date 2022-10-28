@@ -1,5 +1,5 @@
 import { Writable as WritableStream } from "stream";
-import { IListingElement } from "./connection";
+import { EEntryType, IListingElement } from "./connection";
 
 // const XRegExp = require('xregexp').XRegExp;
 
@@ -117,7 +117,7 @@ export interface IListMlsx {
 }
 
 interface IListUnix {
-    type: string;
+    type: EEntryType;
     permission: string;
     acl: string;
     inodes: string;
@@ -168,7 +168,7 @@ function regListUnix(text: string): IListUnix | null {
         owner: temp[5],
         permission: temp[2],
         size: temp[7],
-        type: temp[1],
+        type: matchEntryType(temp[1]),
         year: temp[14],
     };
 }
@@ -240,7 +240,7 @@ export function parseMlsxEntry(line: string): string | (IListingElement & { mlsx
         size: mlsx.size ? parseInt(mlsx.size, 10) : -1,
         sticky: false,
         target: undefined,
-        type: mlsx.type == "dir" || mlsx.type == "cdir" || mlsx.type == "pdir" ? "d" : "-",
+        type: mlsx.type == "dir" || mlsx.type == "cdir" || mlsx.type == "pdir" ? EEntryType.DIR : EEntryType.FILE,
     };
 
     if (mlsx.modify) {
@@ -331,7 +331,7 @@ export function parseListEntry(line: string) {
             size: parseInt(ret.size, 10),
             sticky: false,
             target,
-            type: ret.type,
+            type: matchEntryType(ret.type),
         };
 
         // check for sticky bit
@@ -438,7 +438,7 @@ export function parseListEntry(line: string) {
             date: new Date(year, month - 1, day, hour, mins),
             name: ret.name,
             size: ret.isdir ? 0 : parseInt(ret.size, 10),
-            type: ret.isdir ? "d" : "-",
+            type: ret.isdir ? EEntryType.DIR : EEntryType.FILE,
         };
 
         // info.date = new Date(year, month - 1, day, hour, mins);
@@ -450,4 +450,21 @@ export function parseListEntry(line: string) {
     // look at the raw listing themselves
     return null;
     // throw new Error("No match found!");
+}
+
+/**
+ * Parse a string to match the enum EEntryType
+ * @param input The string to parse
+ * @returns @see EEntryType
+ */
+export const matchEntryType = (input: string): EEntryType => {
+    if (input === "d") {
+        return EEntryType.DIR;
+    } else if (input === "l") {
+        return EEntryType.SYMLINK;
+    } else if (input === "-") {
+        return EEntryType.FILE;
+    }
+
+    return EEntryType.UNKNOWN;
 }

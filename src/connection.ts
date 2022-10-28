@@ -79,7 +79,7 @@ export interface IListingElement {
     /**
      * A single character denoting the entry type: 'd' for directory, '-' for file (or 'l' for symlink on **\*NIX only**).
      */
-    type: string;
+    type: EEntryType;
     /**
      * The name of the entry
      */
@@ -125,6 +125,16 @@ export interface IListingElement {
      * True if the sticky bit is set for this entry **(*NIX only)**.
      */
     sticky?: boolean;
+}
+
+/**
+ * Enum for the different types of entries in a directory listing
+ */
+ export enum EEntryType {
+    FILE = "-",
+    DIR = "d",
+    SYMLINK = 'l',
+    UNKNOWN = '?'
 }
 
 export interface IRegDate {
