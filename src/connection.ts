@@ -736,9 +736,21 @@ export class FTP extends EventEmitter {
      * This is useful for servers that do not handle characters like spaces and quotes in directory names well for the LIST command.
      * This function is "optional" because it relies on pwd() being available.
      */
-    public listSafe(path?: string, useCompression?: boolean): Promise<Array<IListingElement | string>>;
-    public listSafe(useCompression: boolean): Promise<Array<IListingElement | string>>;
-    public async listSafe(path?: string | boolean, useCompression?: boolean): Promise<Array<IListingElement | string>> {
+    public async listSafe(path?: string): Promise<Array<IListingElement>> {
+        return this.listSafeFunc(path, false) as Promise<Array<IListingElement>>;
+    }
+
+    /**
+     * Similar to listSafe(), but now compresses the result and returns as an array og strings instead of an array of objects.
+     */
+    public async listSafeCompressed(path?: string): Promise<Array<string>> {
+        return this.listSafeFunc(path, true) as Promise<Array<string>>;
+    }
+
+    private listSafeFunc = async (
+        path?: string | boolean,
+        useCompression?: boolean
+    ): Promise<Array<IListingElement | string>> => {
         if (typeof path === "string") {
             // store current path
             const origpath = await this.pwd();
@@ -746,18 +758,18 @@ export class FTP extends EventEmitter {
             await this.cwd(path);
             // get dir listing
             try {
-                return this.list(useCompression || false);
+                return this.listFunc(useCompression || false);
             } finally {
                 if (origpath) {
                     await this.cwd(origpath);
                 }
             }
         } else if (typeof path === "boolean") {
-            return this.list(path);
+            return this.listFunc(path);
         } else {
             return this.list();
         }
-    }
+    };
 
     public async fileInfo(path: string): Promise<IListingElement | null> {
         const feat = this._feat || [];
@@ -776,7 +788,7 @@ export class FTP extends EventEmitter {
             }
         }
         if (!mlst) {
-            const list = await this.list(path, false);
+            const list = await this.listFunc(path, false);
             let item: null | IListingElement = null;
             if (list.length == 1 && typeof list[0] != "string") {
                 item = list[0];
@@ -809,11 +821,20 @@ export class FTP extends EventEmitter {
     /**
      * Retrieves the directory listing of path.
      * @param path defaults to the current working directory.
-     * @param useCompression defaults to false.
      */
-    public list(path?: string, useCompression?: boolean): Promise<Array<IListingElement | string>>;
-    public list(useCompression: boolean): Promise<Array<IListingElement | string>>;
-    public async list(path?: string | boolean, useCompression?: boolean): Promise<Array<IListingElement | string>> {
+    public async list(path?: string): Promise<Array<IListingElement>> {
+        return this.listFunc(path, false) as Promise<Array<IListingElement>>;
+    }
+
+    /**
+     * Same as list(), but compresses the result and returns as an array og strings instead of an array of objects.
+     * @param path defaults to the current working directory.
+     */
+    public async listCompressed(path?: string): Promise<Array<string>> {
+        return this.listFunc(path, true) as Promise<Array<string>>;
+    }
+
+    private listFunc = (path?: string | boolean, useCompression?: boolean) => {
         let cmd: string;
         const feat = this._feat || [];
         let mlst: undefined | string[] = undefined;
@@ -1003,7 +1024,7 @@ export class FTP extends EventEmitter {
                 return sendList();
             }
         }).then((x) => x.a);
-    }
+    };
 
     /**
      * Retrieves a file at path from the server. useCompression defaults to false
