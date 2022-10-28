@@ -467,4 +467,4 @@ export const matchEntryType = (input: string): EEntryType => {
     }
 
     return EEntryType.UNKNOWN;
-}
+};
